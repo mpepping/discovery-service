@@ -261,38 +261,6 @@ See the `deploy/kubernetes/` directory for example manifests.
 kubectl apply -f deploy/kubernetes/
 ```
 
-## API Compatibility
-
-This implementation maintains wire-protocol compatibility with the original Talos discovery service:
-
-- ✅ Identical gRPC method signatures
-- ✅ Same message types and field numbers
-- ✅ Compatible behavior (TTL, expiration, rate limiting)
-- ✅ Same default ports (3000, 3001, 2122)
-
-## Architecture
-
-### State Management
-
-- **In-Memory Storage:** All data stored in memory with mutex-protected maps
-- **Thread-Safe:** Concurrent access handled via RWMutex
-- **Garbage Collection:** Periodic cleanup of expired affiliates
-- **Subscriptions:** Real-time notifications via buffered channels (32 elements)
-
-### Rate Limiting
-
-- **Per-IP Tracking:** Individual rate limiters for each client IP
-- **Token Bucket:** 15 req/s with burst of 60
-- **Automatic Cleanup:** Unused limiters cleaned up every minute
-
-### Security Model
-
-1. **No Authentication** - Service should be deployed behind firewall/VPN
-2. **Encrypted Data** - All affiliate data is client-encrypted
-3. **No Decryption** - Service never has keys to decrypt stored data
-4. **Rate Limiting** - Prevents abuse via IP-based throttling
-5. **Input Validation** - Strict validation of all inputs
-
 ## Contributing
 
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
@@ -309,7 +277,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for gu
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
