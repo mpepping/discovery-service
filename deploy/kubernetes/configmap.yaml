@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: discovery-service-config
+  labels:
+    app: discovery-service
+data:
+  listen_addr: ":3000"
+  landing_addr: ":3001"
+  metrics_addr: ":2122"
+  gc_interval: "1m"
+  debug: "false"

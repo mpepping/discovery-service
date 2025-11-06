@@ -69,7 +69,17 @@ The service is configured via command-line flags:
 
 ### Environment Variables
 
-- `MODE=development` - Enables development logging with colored output
+Configuration can be provided via environment variables (overridden by command-line flags):
+
+| Variable            | Default | Description                                   |
+| ------------------- | ------- | --------------------------------------------- |
+| `LISTEN_ADDR`       | `:3000` | gRPC server listen address                    |
+| `LANDING_ADDR`      | `:3001` | HTTP landing page address (empty to disable)  |
+| `METRICS_ADDR`      | `:2122` | Prometheus metrics address (empty to disable) |
+| `REDIRECT_ENDPOINT` | ``      | Optional redirect endpoint for Hello RPC      |
+| `GC_INTERVAL`       | `1m`    | Garbage collection interval                   |
+| `DEBUG`             | `false` | Enable debug logging (true/1/yes)             |
+| `MODE`              | ``      | Set to `development` for colored log output   |
 
 ## API Reference
 

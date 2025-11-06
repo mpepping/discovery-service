@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discovery-service
+  labels:
+    app: discovery-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: discovery-service
+  template:
+    metadata:
+      labels:
+        app: discovery-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "2122"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: discovery-service
+        image: discovery-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: grpc
+          containerPort: 3000
+          protocol: TCP
+        - name: http
+          containerPort: 3001
+          protocol: TCP
+        - name: metrics
+          containerPort: 2122
+          protocol: TCP
+        env:
+        - name: LISTEN_ADDR
+          valueFrom:
+            configMapKeyRef:
+              name: discovery-service-config
+              key: listen_addr
+        - name: LANDING_ADDR
+          valueFrom:
+            configMapKeyRef:
+              name: discovery-service-config
+              key: landing_addr
+        - name: METRICS_ADDR
+          valueFrom:
+            configMapKeyRef:
+              name: discovery-service-config
+              key: metrics_addr
+        - name: GC_INTERVAL
+          valueFrom:
+            configMapKeyRef:
+              name: discovery-service-config
+              key: gc_interval
+        - name: DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: discovery-service-config
+              key: debug
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 2
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        fsGroup: 1000

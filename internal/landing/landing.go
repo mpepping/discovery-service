@@ -48,6 +48,16 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.URL.Path == "/health" {
+		h.serveHealth(w, r)
+		return
+	}
+
+	if r.URL.Path == "/ready" {
+		h.serveReady(w, r)
+		return
+	}
+
 	http.NotFound(w, r)
 }
 
@@ -87,4 +97,25 @@ func (h *Handler) serveInspect(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+}
+
+func (h *Handler) serveHealth(w http.ResponseWriter, r *http.Request) {
+	// Health check - service is healthy if it can respond
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"healthy"}`))
+}
+
+func (h *Handler) serveReady(w http.ResponseWriter, r *http.Request) {
+	// Readiness check - service is ready if state is initialized
+	if h.state == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte(`{"status":"not ready","reason":"state not initialized"}`))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"ready"}`))
 }

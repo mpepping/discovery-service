@@ -29,26 +29,16 @@ func NewIPLimiter() *IPLimiter {
 
 // Allow checks if a request from the given IP should be allowed
 func (ipl *IPLimiter) Allow(ip string) bool {
-	ipl.mu.RLock()
-	entry, exists := ipl.limiters[ip]
-	ipl.mu.RUnlock()
+	ipl.mu.Lock()
+	defer ipl.mu.Unlock()
 
+	entry, exists := ipl.limiters[ip]
 	if exists {
 		entry.lastSeen = time.Now()
 		return entry.limiter.Allow()
 	}
 
 	// Create new limiter for this IP
-	ipl.mu.Lock()
-	defer ipl.mu.Unlock()
-
-	// Double-check after acquiring write lock
-	entry, exists = ipl.limiters[ip]
-	if exists {
-		entry.lastSeen = time.Now()
-		return entry.limiter.Allow()
-	}
-
 	limiter := rate.NewLimiter(
 		rate.Limit(limits.IPRateRequestsPerSecondMax),
 		limits.IPRateBurstSizeMax,

@@ -29,19 +29,45 @@ import (
 
 var (
 	// gRPC server flags
-	listenAddr       = flag.String("listen-addr", ":3000", "gRPC server listen address")
-	redirectEndpoint = flag.String("redirect-endpoint", "", "Optional redirect endpoint for Hello RPC")
+	listenAddr       = flag.String("listen-addr", getEnv("LISTEN_ADDR", ":3000"), "gRPC server listen address")
+	redirectEndpoint = flag.String("redirect-endpoint", getEnv("REDIRECT_ENDPOINT", ""), "Optional redirect endpoint for Hello RPC")
 
 	// HTTP server flags
-	landingAddr = flag.String("landing-addr", ":3001", "HTTP landing page listen address")
-	metricsAddr = flag.String("metrics-addr", ":2122", "Prometheus metrics listen address")
+	landingAddr = flag.String("landing-addr", getEnv("LANDING_ADDR", ":3001"), "HTTP landing page listen address")
+	metricsAddr = flag.String("metrics-addr", getEnv("METRICS_ADDR", ":2122"), "Prometheus metrics listen address")
 
 	// GC flags
-	gcInterval = flag.Duration("gc-interval", time.Minute, "Garbage collection interval")
+	gcInterval = flag.Duration("gc-interval", getEnvDuration("GC_INTERVAL", time.Minute), "Garbage collection interval")
 
 	// Logging flags
-	debug = flag.Bool("debug", false, "Enable debug logging")
+	debug = flag.Bool("debug", getEnvBool("DEBUG", false), "Enable debug logging")
 )
+
+// getEnv gets an environment variable or returns a default value
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+// getEnvBool gets a boolean environment variable or returns a default value
+func getEnvBool(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		return value == "true" || value == "1" || value == "yes"
+	}
+	return defaultValue
+}
+
+// getEnvDuration gets a duration environment variable or returns a default value
+func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
+	if value := os.Getenv(key); value != "" {
+		if duration, err := time.ParseDuration(value); err == nil {
+			return duration
+		}
+	}
+	return defaultValue
+}
 
 func main() {
 	flag.Parse()
