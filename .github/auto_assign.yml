@@ -1,0 +1,10 @@
+addReviewers: true
+addAssignees: true
+
+reviewers:
+  - mpepping
+
+skipKeywords:
+  - wip
+
+numberOfReviewers: 0
