@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build AMD64 binary
+        run: |
+          GOOS=linux GOARCH=amd64 go build -v -ldflags="-s -w" -o discovery-service-linux-amd64 ./cmd/discovery-service
+          chmod +x discovery-service-linux-amd64
+
+      - name: Build ARM64 binary
+        run: |
+          GOOS=linux GOARCH=arm64 go build -v -ldflags="-s -w" -o discovery-service-linux-arm64 ./cmd/discovery-service
+          chmod +x discovery-service-linux-arm64
+
+      - name: Generate checksums
+        run: |
+          sha256sum discovery-service-linux-amd64 > discovery-service-linux-amd64.sha256
+          sha256sum discovery-service-linux-arm64 > discovery-service-linux-arm64.sha256
+          sha256sum discovery-service-linux-*.sha256 > checksums.txt
+
+      - name: Create release notes
+        run: |
+          cat > release-notes.md << 'EOF'
+          ## Discovery Service ${{ steps.version.outputs.VERSION }}
+
+          ### Downloads
+
+          Download the binary for your architecture:
+          - **Linux AMD64**: `discovery-service-linux-amd64`
+          - **Linux ARM64**: `discovery-service-linux-arm64`
+
+          ### Verify checksums
+
+          ```bash
+          # Verify AMD64
+          sha256sum -c discovery-service-linux-amd64.sha256
+
+          # Verify ARM64
+          sha256sum -c discovery-service-linux-arm64.sha256
+          ```
+
+          ### Quick Start
+
+          ```bash
+          # Download (replace with your architecture)
+          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/discovery-service-linux-amd64
+          chmod +x discovery-service-linux-amd64
+
+          # Run
+          ./discovery-service-linux-amd64 -listen-addr :3000
+          ```
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            discovery-service-linux-amd64
+            discovery-service-linux-amd64.sha256
+            discovery-service-linux-arm64
+            discovery-service-linux-arm64.sha256
+            checksums.txt
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
