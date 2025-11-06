@@ -1,0 +1,37 @@
+# Binaries
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+coverage.out
+coverage.html
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+API_RESEARCH.md
+
+# CI/CD
+.github/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.log
+*.tmp

@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package sidero.discovery.server;  // Can't change without breaking Talos clients
+
+option go_package = "github.com/mpepping/discovery-service/api/cluster/v1;clusterv1";
+
+import "google/protobuf/duration.proto";
+
+// Cluster service provides centralized discovery for cluster nodes.
+// It enables nodes to exchange membership information and endpoints.
+service Cluster {
+  // Hello is the initial handshake method that returns the client's observed IP
+  // and may optionally redirect to another server instance.
+  rpc Hello(HelloRequest) returns (HelloResponse);
+
+  // AffiliateUpdate creates or updates an affiliate record with encrypted data
+  // and endpoints, applying a time-to-live value.
+  rpc AffiliateUpdate(AffiliateUpdateRequest) returns (AffiliateUpdateResponse);
+
+  // AffiliateDelete removes an affiliate from the cluster by ID.
+  rpc AffiliateDelete(AffiliateDeleteRequest) returns (AffiliateDeleteResponse);
+
+  // List retrieves all current affiliates for a cluster.
+  rpc List(ListRequest) returns (ListResponse);
+
+  // Watch streams real-time affiliate changes, beginning with a snapshot
+  // of existing state followed by updates and deletions.
+  rpc Watch(WatchRequest) returns (stream WatchResponse);
+}
+
+// Affiliate represents a cluster member containing an ID, encrypted data payload,
+// and encrypted endpoint list.
+message Affiliate {
+  string id = 1;
+  bytes data = 2;
+  bytes endpoints = 3;
+}
+
+// HelloRequest initiates the client handshake.
+message HelloRequest {
+  string cluster_id = 1;
+  string client_version = 2;
+}
+
+// HelloResponse returns connection information to the client.
+message HelloResponse {
+  string client_ip = 1;
+  Endpoint redirect = 2;
+}
+
+// Endpoint specifies a network endpoint.
+message Endpoint {
+  string addr = 1;
+}
+
+// AffiliateUpdateRequest submits affiliate updates with optional data and endpoints.
+message AffiliateUpdateRequest {
+  string cluster_id = 1;
+  string affiliate_id = 2;
+  bytes data = 3;
+  bytes endpoints = 4;
+  google.protobuf.Duration ttl = 5;
+}
+
+// AffiliateUpdateResponse confirms the update operation.
+message AffiliateUpdateResponse {}
+
+// AffiliateDeleteRequest specifies affiliate removal by cluster and affiliate ID.
+message AffiliateDeleteRequest {
+  string cluster_id = 1;
+  string affiliate_id = 2;
+}
+
+// AffiliateDeleteResponse confirms the deletion operation.
+message AffiliateDeleteResponse {}
+
+// ListRequest queries cluster affiliates.
+message ListRequest {
+  string cluster_id = 1;
+}
+
+// ListResponse returns all affiliates for the cluster.
+message ListResponse {
+  repeated Affiliate affiliates = 1;
+}
+
+// WatchRequest initiates monitoring of cluster changes.
+message WatchRequest {
+  string cluster_id = 1;
+}
+
+// WatchResponse streams affiliate changes with a deletion flag.
+message WatchResponse {
+  Affiliate affiliate = 1;
+  bool deleted = 2;
+}
